@@ -1,20 +1,20 @@
-# PPO (Proximal Policy Optimization)
+# PPO versus SAC
 
-A PyTorch implementation of the Proximal Policy Optimization (PPO) algorithm for reinforcement learning with **Isaac Sim integration**.
+A PyTorch implementation comparing Proximal Policy Optimization (PPO) and Soft Actor-Critic (SAC) algorithms for reinforcement learning.
 
 ## Features
 
-- Clean, modular implementation of PPO
+- Clean, modular implementations of both PPO and SAC algorithms
 - Support for both continuous and discrete action spaces
 - Configurable hyperparameters
 - TensorBoard logging for training visualization
 - Multiple environment support (CartPole, LunarLander, etc.)
-- **Isaac Sim integration** for high-performance physics simulation
 - **Reward printing every N epochs** for monitoring training progress
 - **Automatic model saving every N epochs** for checkpointing
 - **Early stopping** with configurable patience and improvement threshold
 - **Learning rate annealing** with multiple schedule types (linear, cosine, exponential, step, cosine warm restart)
 - Training visualization and plotting tools
+- Performance comparison between PPO and SAC
 
 ## Installation
 
@@ -29,33 +29,6 @@ conda activate ppo
 
 ```bash
 pip install -r requirements.txt
-```
-
-### Isaac Sim Installation
-
-To use Isaac Sim environments, you need to install Isaac Sim separately:
-
-#### Option 1: Using Omniverse Launcher (Recommended)
-1. Download and install [Omniverse Launcher](https://www.nvidia.com/en-us/omniverse/)
-2. Install Isaac Sim from the Omniverse Launcher
-3. Install the Python packages in your conda environment:
-```bash
-conda activate ppo
-pip install omni-isaac-gym omni-isaac-sim omni-isaac-gym-envs
-```
-
-#### Option 2: Using Docker
-```bash
-docker pull nvcr.io/nvidia/isaac-sim:2023.1.1
-docker run --gpus all -it --rm -v $(pwd):/workspace nvcr.io/nvidia/isaac-sim:2023.1.1
-```
-
-#### Option 3: Manual Installation
-```bash
-# Install Isaac Sim dependencies
-pip install omni-isaac-gym>=1.0.0
-pip install omni-isaac-sim>=2023.1.0
-pip install omni-isaac-gym-envs>=1.0.0
 ```
 
 ## Usage
@@ -76,64 +49,6 @@ trainer = PPOTrainer(agent, env_name="CartPole-v1")
 
 # Train the agent
 trainer.train(episodes=500)
-```
-
-### Isaac Sim Training
-```python
-from ppo.agent import PPOAgent
-from ppo.trainer import PPOTrainer
-from ppo.isaac_env import create_isaac_env
-from configs.default_config import PPOConfig
-
-# Create Isaac Sim environment
-env = create_isaac_env(
-    env_name="cartpole",
-    num_envs=4,  # Number of parallel environments
-    device="cuda",
-    headless=True  # Set to False for visualization
-)
-
-# Create agent
-agent = PPOAgent(
-    state_dim=4,
-    action_dim=2,
-    hidden_dim=PPOConfig.HIDDEN_DIM
-)
-
-# Create trainer with Isaac Sim environment
-trainer = PPOTrainer(agent, env=env)
-
-# Train the agent
-trainer.train(episodes=500, save_path="models/isaac_cartpole_best.pth")
-```
-
-### Vectorized Isaac Sim Training (Recommended)
-```python
-from ppo.agent import PPOAgent
-from ppo.trainer import PPOTrainer
-from ppo.isaac_vec_env import create_isaac_vec_env
-from configs.default_config import PPOConfig
-
-# Create vectorized Isaac Sim environment for better performance
-env = create_isaac_vec_env(
-    env_name="cartpole",
-    num_envs=8,  # Multiple parallel environments
-    device="cuda",
-    headless=True
-)
-
-# Create agent
-agent = PPOAgent(
-    state_dim=4,
-    action_dim=2,
-    hidden_dim=PPOConfig.HIDDEN_DIM
-)
-
-# Create trainer
-trainer = PPOTrainer(agent, env=env)
-
-# Train the agent
-trainer.train(episodes=500, save_path="models/isaac_vec_cartpole_best.pth")
 ```
 
 ### Advanced Training with New Features
@@ -270,32 +185,6 @@ trainer.train(episodes=2000)
 - `examples/cartpole_example.py` - Basic CartPole training
 - `examples/lunar_lander_example.py` - LunarLander training
 
-### Isaac Sim Environments
-- `examples/isaac_cartpole_example.py` - Isaac Sim CartPole training
-- `examples/isaac_vec_cartpole_example.py` - Vectorized Isaac Sim CartPole training
-
-## Isaac Sim Integration
-
-### Supported Environments
-- **CartPole**: Classic control problem with Isaac Sim physics
-- **Custom Environments**: Extend `IsaacEnvWrapper` or `IsaacVecEnv` for custom tasks
-
-### Performance Benefits
-- **GPU-accelerated physics simulation**
-- **Parallel environment execution**
-- **Realistic physics and contact dynamics**
-- **High-fidelity sensor simulation**
-
-### Environment Wrappers
-- `IsaacEnvWrapper`: Single environment wrapper
-- `IsaacVecEnv`: Vectorized environment wrapper for parallel training
-
-### Usage Tips
-1. **Use vectorized environments** for better performance
-2. **Set `headless=True`** for faster training without visualization
-3. **Adjust `num_envs`** based on your GPU memory
-4. **Use CUDA device** for optimal performance
-
 ## New Features
 
 ### 1. Reward Printing
@@ -316,21 +205,21 @@ Early stopping is currently disabled (patience = 0). When enabled, training auto
 - `early_stopping_threshold`: Minimum improvement required to reset patience
 - Helps prevent overfitting and saves training time
 
-### 4. Isaac Sim Integration
-- High-performance physics simulation
-- GPU-accelerated environment execution
-- Realistic physics and contact dynamics
-- Parallel environment training
-
 ## Project Structure
 
 ```
-PPO/
+PPO-vs-SAC/
 ├── ppo/
 │   ├── __init__.py
 │   ├── agent.py          # PPO agent with actor-critic networks
 │   ├── memory.py         # Experience replay buffer
 │   ├── trainer.py        # Training loop and logic
+│   └── utils.py          # Utility functions
+├── sac/
+│   ├── __init__.py
+│   ├── agent.py          # SAC agent implementation
+│   ├── memory.py         # Replay buffer for SAC
+│   ├── trainer.py        # SAC training loop
 │   └── utils.py          # Utility functions
 ├── configs/
 │   └── default_config.py # Default hyperparameters
@@ -346,9 +235,17 @@ PPO/
 
 ## Key Components
 
+### PPO
 1. **PPOAgent**: Implements the actor-critic architecture with separate policy and value networks
 2. **PPOMemory**: Manages experience storage and sampling for training
 3. **PPOTrainer**: Handles the training loop, environment interaction, and logging
+
+### SAC
+1. **SACAgent**: Implements the Soft Actor-Critic algorithm with continuous action spaces
+2. **SACMemory**: Replay buffer for off-policy learning
+3. **SACTrainer**: Handles the SAC training loop and optimization
+
+### Shared
 4. **Config**: Centralized hyperparameter management
 
 ## Hyperparameters
